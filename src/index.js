@@ -70,7 +70,7 @@ function Header(props){
 			<div className='col-xs-12'>
 				<span>Candidate Search Filter</span>
 				<span>Applied Filters ({count})</span>	
-				{Button}			
+				<SelectedFilter />			
 			</div>
 		);
 }
