@@ -130,16 +130,14 @@ class App extends React.Component{
 			);
 	}
 }
-var xhr = new XMLHttpRequest();
-xhr.open('GET', 'http://104.199.147.85/candidates', true);
-xhr.responseType = 'json';
-xhr.onload = function(e) {
-  if (this.status == 200) {  	
-  	debugger
-  	ReactDOM.render(
-  		<App candidates = {this.response.candidates}/>,  		
-  		document.getElementById('root')
-  	);
-  }
-};
-xhr.send();
+
+var promise = fetch("http://104.199.147.85/candidates");
+promise.then(response => {
+	response.json().then(res => {
+		ReactDOM.render(
+	  		<App candidates = {res.candidates}/>,  		
+	  		document.getElementById('root')
+  		);
+	})
+	console.log(response);
+});
