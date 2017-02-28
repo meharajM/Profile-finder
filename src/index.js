@@ -14,7 +14,7 @@ import './index.css';
 /*
 sudo npm star to run server
 
-Components :
+Components : 
   App
     Search
     Filter
@@ -27,7 +27,7 @@ Components :
     
 */
 	function Experience(props){
-	const experience = props.experience;
+	const experience = props.experience;	
 	let list = experience.map((exp)=>{return exp.company});
 	return(
 		<span>{list.join(', ')}</span>
@@ -50,7 +50,7 @@ function Candidate(props){
 }
 function CompanyFilter(props){
 	const companyList = props.companyList;
-	const companyFilter = companyList.map((company)=>{
+	const companyFilter = companyList && companyList.map((company)=>{
 			return(<option>{company}</option>);
 		});
 	return(<select name='filterCompany' onChange={props.whenChanged}>
@@ -61,7 +61,7 @@ function CompanyFilter(props){
 }
 function LocationFilter(props){
 	const locationList = props.locationList;
-	const locationFilter = locationList.map((location)=>{
+	const locationFilter = locationList && locationList.map((location)=>{
 		return(<option>{location}</option>);
 	});
 	return(<select name='filterLocation' onChange={props.whenChanged}>
@@ -74,9 +74,9 @@ function SearchName(props){
 	return(<input name="searchName" type="text" placeholder="search name" onChange={props.whenChanged}/>);
 }
 function Header(props){
-	let count = props.filterCompany != 'all' ? 1 : 0;
-	count = props.filterLocation != 'all' ? count + 1 : count;
-	count = props.searchName != '' ? count + 1 : count;  
+	let count = props.filterCompany !== 'all' ? 1 : 0;
+	count = props.filterLocation !== 'all' ? count + 1 : count;
+	count = props.searchName !== '' ? count + 1 : count;  
 	return(
 			<div className='col-xs-12'>
 				<span>Candidate Search Filter</span>
@@ -94,6 +94,36 @@ function SelectedFilter(props){
 		);
 
 }
+class ShowFilters extends React.Component{
+    constructor(props){
+        super(props);
+        this.state = {
+            companyList: [],
+            locationList: []
+        };
+    }
+    render(){
+        debugger
+        if(!this.state.companyList.length){
+            var promise = fetch("http://104.199.147.85/meta");
+                    promise.then(response => {
+                        response.json().then(res => {
+                            debugger
+                           this.setState({
+                                companyList : res.companies,
+                                locationList : res.locations
+                           });
+                        })
+                    });
+        }
+        return(
+            <div>
+                <CompanyFilter companyList={this.state.companyList} />
+                <LocationFilter locationList={this.state.locationList} />
+            </div>
+        );
+    }
+}
 
 class App extends React.Component{
 	constructor(props){
@@ -106,7 +136,6 @@ class App extends React.Component{
 		this.handleFilterChange = this.handleFilterChange.bind(this);
 	}
 	handleFilterChange(event){
-		debugger
 		const target = event.target;
 		const name = target.name;
 		const value = target.value;
@@ -134,12 +163,11 @@ class App extends React.Component{
 					<Row>
 					<Col xs={12}>
 						<Col md={8} sm={12}><Header filterCompany={filterCompany} filterLocation={filterLocation} searchName={searchName}/> </Col>
-						<Col md={4} sm={12}><SearchName whenChanged={this.handleFilterChange}/></Col>
+						<Col md={4} sm={12}><SearchName whenChanged={this.handleFilterChange}/></Col>	
 					</Col>
-					<CompanyFilter companyList={companyList} whenChanged={this.handleFilterChange}/>	
-					<LocationFilter locationList={locationList} whenChanged={this.handleFilterChange}/>		
-
-					</Row>
+					<ShowFilters />
+					
+					</Row>	
 				</div>			
 				<div className="container">{candidateList}</div>
 			</Grid>
@@ -147,17 +175,48 @@ class App extends React.Component{
 	}
 }
 
+class Home extends React.Component{
+    constructor(props){
+        super(props);
+        this.state = {
+            candidates : []
+        };
+    }
 
 
-
-var promise = fetch("http://104.199.147.85/candidates");
-promise.then(response => {
-	response.json().then(res => {
-		ReactDOM.render(
-	  		<App candidates = {res.candidates}/>,
+    render(){
+        if(!this.state.candidates.length){
+            var promise = fetch("http://104.199.147.85/candidates");
+                    promise.then(response => {
+                        response.json().then(res => {
+                           this.setState({
+                            candidates : res.candidates
+                           });
+                        })
+                    })
+        }
+        return(
+            <div>
+               <App candidates = {this.state.candidates}/>
+            </div>
+        );
+    }
+}
+ReactDOM.render(
+	  		<Router history = {browserHistory}>
+	  		    <Route path="/" component = {Home}/>
+	  		</Router>,
 	  		document.getElementById('root')
   		);
-	})
-	console.log(response);
-});
+
+//var promise = fetch("http://104.199.147.85/candidates");
+//promise.then(response => {
+//	response.json().then(res => {
+//		ReactDOM.render(
+//	  		<App candidates = {res.candidates}/>,
+//	  		document.getElementById('root')
+//  		);
+//	})
+//	console.log(response);
+//});
 
