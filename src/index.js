@@ -7,6 +7,8 @@ import Grid from 'react-bootstrap/lib/Grid';
 import Row from 'react-bootstrap/lib/Row';
 import Col from 'react-bootstrap/lib/Col';
 import 'bootstrap/less/bootstrap.less';
+import style from 'bootstrap/dist/css/bootstrap.css';
+
 
 
 //import App from './App';
@@ -71,7 +73,7 @@ function LocationFilter(props){
 }
 
 function SearchName(props){
-	return(<input name="searchName" type="text" placeholder="search name" onChange={props.whenChanged}/>);
+	return(<input name="searchName" type="text" placeholder="search name" id="searchName" onKeyUp={props.whenChanged} />);
 }
 function Header(props){
 	let count = props.filterCompany !== 'all' ? 1 : 0;
@@ -88,7 +90,7 @@ function Header(props){
 function SelectedFilter(props){
 	return(
 			<div>
-					<span><Button bsStyle='success' bsSize='large'>Get started today</Button>
+					<span>
 					</span>
 			</div>
 		);
@@ -103,13 +105,11 @@ class ShowFilters extends React.Component{
         };
     }
     render(){
-        debugger
         if(!this.state.companyList.length){
             var promise = fetch("http://104.199.147.85/meta");
                     promise.then(response => {
                         response.json().then(res => {
-                            debugger
-                           this.setState({
+                          this.setState({
                                 companyList : res.companies,
                                 locationList : res.locations
                            });
@@ -128,48 +128,29 @@ class ShowFilters extends React.Component{
 class App extends React.Component{
 	constructor(props){
 		super(props);
-		this.state = {
-			'filterCompany': 'all',
-			'filterLocation': 'all',
-			'searchName': ''
-		};
-		this.handleFilterChange = this.handleFilterChange.bind(this);
 	}
-	handleFilterChange(event){
-		const target = event.target;
-		const name = target.name;
-		const value = target.value;
-		this.setState({
-			[name]: value
-		});
-	}
+	
 	render(){
 		const candidates = this.props.candidates;
 		let companyList = [];
 		let locationList = [];
-		const filterCompany = this.state.filterCompany;
-		const filterLocation = this.state.filterLocation;
-		const searchName = this.state.searchName;
 		const candidateList = candidates.map((candidate) => {
-			companyList.push(candidate.current_company);
-			locationList.push(candidate.current_location);
-			if((filterCompany === 'all' || filterCompany === candidate.current_company) && (filterLocation === 'all' || filterLocation === candidate.current_location) && (searchName === '' || (candidate.first_name+candidate.last_name).toLowerCase().indexOf(searchName.toLowerCase()) > -1 )) {
+			
 				return(<div className="candidate"><Candidate key={candidate.uid} candidate={candidate}/></div>)
-			}			
+						
 		});
 		return(
 			<Grid>
 				<div>
 					<Row>
 					<Col xs={12}>
-						<Col md={8} sm={12}><Header filterCompany={filterCompany} filterLocation={filterLocation} searchName={searchName}/> </Col>
-						<Col md={4} sm={12}><SearchName whenChanged={this.handleFilterChange}/></Col>	
+						<Col md={4} sm={12}><SearchName whenChanged={this.props.handleFilterChange} searchName = {this.props.searchName}/></Col>	
 					</Col>
 					<ShowFilters />
 					
 					</Row>	
 				</div>			
-				<div className="container">{candidateList}</div>
+				<div className="container">{/*candidateList*/}</div>
 			</Grid>
 			);
 	}
@@ -178,26 +159,44 @@ class App extends React.Component{
 class Home extends React.Component{
     constructor(props){
         super(props);
+        this.handleFilterChange = this.handleFilterChange.bind(this);
         this.state = {
-            candidates : []
+            candidates : [],
+            searchName : '',
+            lastSearchName : ''
         };
     }
-
+    handleFilterChange(event){
+		
+		if(event.currentTarget.id === "searchName" && event.keyCode === 13){
+			browserHistory.push('?name='+event.currentTarget.value);
+			this.setState({
+				searchName: this.props.location.query.name,
+				lastSearchName: this.state.searchName
+			});
+		}		
+	}
 
     render(){
-        if(!this.state.candidates.length){
-            var promise = fetch("http://104.199.147.85/candidates");
+    	
+        if(!this.state.candidates.length || this.state.lastSearchName !== this.state.searchName){
+        	var baseUrl = "http://104.199.147.85/candidates";
+        	if(!!this.state.searchName){
+        		baseUrl += "?query="+this.state.searchName;
+        	}
+            var promise = fetch(baseUrl);
                     promise.then(response => {
                         response.json().then(res => {
                            this.setState({
-                            candidates : res.candidates
+                            candidates : res.candidates,
+                            lastSearchName: this.state.searchName
                            });
                         })
                     })
         }
         return(
             <div>
-               <App candidates = {this.state.candidates}/>
+               <App candidates = {this.state.candidates} location = {this.props.location} handleFilterChange = {this.handleFilterChange} searchName = {this.state.searchName}/>
             </div>
         );
     }
