@@ -150,7 +150,7 @@ class App extends React.Component{
 					
 					</Row>	
 				</div>			
-				<div className="container">{/*candidateList*/}</div>
+				<div className="container">{candidateList}</div>
 			</Grid>
 			);
 	}
